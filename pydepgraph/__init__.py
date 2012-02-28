@@ -293,7 +293,7 @@ def build_graph(files):
             if "import" == line[0]:
                 tmp = " ".join(line[1:]).split(",")
                 for name in tmp:
-                    name = name.split(" ")[0]
+                    name = name.strip().split(" ")[0]
                     if adjust(name) not in [x for x in graph[file_display]]:
                         graph[file_display].append(adjust(name))
             elif "from" == line[0]:
