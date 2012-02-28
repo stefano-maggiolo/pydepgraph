@@ -66,7 +66,7 @@ def color_label(names, start=0.0, stop=1.0):
 
     names_split = [x.split(".") for x in names]
     first_level = sorted(list(set([x[0] for x in names_split])))
-    step = (stop - start) / (len(names) * damping)
+    step = 0.0 if names == [] else (stop - start) / (len(names) * damping)
     ret = {}
     cur = start
     for word in first_level:
@@ -199,7 +199,12 @@ def compute_list(path, additional_path="", exclude=None, recursive=True):
         exclude = []
     ret = []
     clusters = [(adjust(additional_path), path)]
-    list_ = dircache.listdir(os.path.join(path, additional_path))
+    complete_path = os.path.join(path, additional_path)
+    try:
+        list_ = dircache.listdir(complete_path)
+    except OSError:
+        sys.stderr.write("Warning: cannot open path %s.\n" % complete_path)
+        return [], []
     for name in list_:
         if name in [".", ".."] or name in exclude:
             continue
