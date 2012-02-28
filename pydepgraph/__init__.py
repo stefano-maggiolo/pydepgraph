@@ -347,7 +347,7 @@ def do_graph(paths,
 
     string = "digraph G {\n" \
              "ranksep=1.0\n" \
-             "node [style=filled,fontname=Helvetica,fontsize=10];\n"
+             "node [style=filled,fontname=Helvetica,fontsize=16];\n"
 
     for name in sorted(graph):
         for c_name, idx in [(x[0], x[2])
