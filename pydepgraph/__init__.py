@@ -28,7 +28,10 @@ import colorsys
 import argparse
 
 
-DRAW_MODES = ["NO_CLUSTERS", "CLUSTERS", "ONLY_CLUSTERS"]
+DRAW_MODES = ["NO_CLUSTERS",
+              "CLUSTERS",
+              "ONLY_CLUSTERS",
+              "ONLY_CLUSTERS_WITH_SELF_EDGES"]
 
 
 ## Color hashing functions. ##
@@ -148,8 +151,6 @@ def adjust(name):
     return (str): name formatted as a package.
 
     """
-    if len(name) >= 2 and name[:2] == "./":
-        name = name[2:]
     name = name.replace("/", ".")
     if name.endswith(".py"):
         name = name[:-3]
@@ -182,12 +183,12 @@ def label(name):
 
 ## File searching functions. ##
 
-def compute_list(paths, exclude=None, recursive=True):
+def compute_list(path, additional_path="", exclude=None, recursive=True):
     """Return all Python files and clusters (read: subdirectory)
     starting from a path in paths, not crossing directories or files
     whose name is in exclude (and recurring if recursive is True).
 
-    paths ([str]): list of starting paths to check.
+    path (str): starting path to check.
     exclude ([str]): list of directory of file names to exclude.
     recursive (bool): whether we descend into subdirectories.
 
@@ -197,22 +198,25 @@ def compute_list(paths, exclude=None, recursive=True):
     if exclude is None:
         exclude = []
     ret = []
-    clusters = []
-    for path in paths:
-        list_ = dircache.listdir(path)
-        for name in list_:
-            if name in [".", ".."] or name in exclude:
-                continue
-            complete_name = os.path.join(path, name)
-            if os.path.isdir(complete_name):
-                clusters.append(adjust(complete_name))
-                if recursive:
-                    tmp_ret, tmp_clusters = compute_list([complete_name],
-                                                         exclude)
-                    ret += tmp_ret
-                    clusters += tmp_clusters
-            elif name.endswith(".py"):
-                ret.append(complete_name)
+    clusters = [(adjust(additional_path), path)]
+    list_ = dircache.listdir(os.path.join(path, additional_path))
+    for name in list_:
+        if name in [".", ".."] or name in exclude:
+            continue
+
+        partial_name = os.path.join(additional_path, name)
+        complete_name = os.path.join(path, partial_name)
+        if os.path.isdir(complete_name):
+            if recursive:
+                tmp_ret, tmp_clusters = compute_list(path,
+                                                     partial_name,
+                                                     exclude,
+                                                     recursive)
+                ret += tmp_ret
+                clusters += tmp_clusters
+        elif name.endswith(".py"):
+            ret.append((partial_name, path))
+
     return ret, clusters
 
 
@@ -237,11 +241,12 @@ def find_best_cluster(name, clusters):
     return best
 
 
-def build_graph_clusters(graph, clusters):
+def build_graph_clusters(graph, clusters, self_edges=False):
     """Given a graph of packages, build a graph of clusters.
 
     graph ({str: [str]}): a graph of packages as an adjacency matrix.
     clusters ([str]): a list of cluster names.
+    self_edges (bool): if True, draw also self edges.
 
     return ({str: [str]}) a graph of clusters as an adjacency matrix.
 
@@ -253,9 +258,10 @@ def build_graph_clusters(graph, clusters):
             continue
         for name_ in graph[name]:
             target = find_best_cluster(name_, clusters)
-            if target is not None and target != source:
-                if target not in graph_clusters[source]:
-                    graph_clusters[source].append(target)
+            if target is not None:
+                if self_edges or target != source:
+                    if target not in graph_clusters[source]:
+                        graph_clusters[source].append(target)
     return graph_clusters
 
 
@@ -271,8 +277,8 @@ def build_graph(files):
 
     """
     graph = {}
-    for file_ in files:
-        content = open(file_).read().replace("\\\n", "")
+    for file_, path in files:
+        content = open(os.path.join(path, file_)).read().replace("\\\n", "")
         file_display = adjust(file_)
         graph[file_display] = []
         for line in content.split("\n"):
@@ -309,16 +315,28 @@ def do_graph(paths,
     """
     if exclude is None:
         exclude = []
-    files, tmp_clusters = compute_list(paths,
-                                       exclude=exclude,
-                                       recursive=recursive)
+    files = []
+    autoclusters = []
+    for path in paths:
+        tmp_files, tmp_autoclusters = compute_list(path,
+                                                   exclude=exclude,
+                                                   recursive=recursive)
+        files += tmp_files
+        autoclusters += tmp_autoclusters
     if clusters is None:
-        clusters = tmp_clusters
+        clusters = autoclusters
+    else:
+        clusters = [(x, "") for x in clusters]
     clusters.sort()
 
     graph = build_graph(files)
-    graph_clusters = build_graph_clusters(graph, clusters)
-    colors = color_label(sorted(list(set(graph.keys() + clusters))))
+    graph_clusters = build_graph_clusters(
+        graph,
+        [cluster[0] for cluster in clusters],
+        self_edges=(draw_mode == "ONLY_CLUSTERS_WITH_SELF_EDGES"))
+
+    all_names = list(set([adjust(x[0]) for x in files + clusters]))
+    colors = color_label(sorted(all_names))
 
     clusters = [[x, "Not opened", i] for i, x in enumerate(clusters)]
 
@@ -329,18 +347,19 @@ def do_graph(paths,
     for name in sorted(graph):
         for c_name, idx in [(x[0], x[2])
                             for x in clusters
-                            if not in_package(name, x[0])
+                            if not in_package(name, x[0][0])
                                 and x[1] == "Opened"]:
             if draw_mode == "CLUSTERS":
                 string += "}\n\n"
             clusters[idx][1] = "Closed"
-        for c_name, idx in [(x[0], x[2])
+        for c_name, idx in [(x[0][0], x[2])
                             for x in clusters
-                            if in_package(name, x[0])
+                            if in_package(name, x[0][0])
                                 and x[1] == "Not opened"]:
             if draw_mode == "CLUSTERS":
                 string += "\nsubgraph cluster_%s {\n" % escape(c_name)
-            elif draw_mode == "ONLY_CLUSTERS":
+            elif draw_mode in ["ONLY_CLUSTERS",
+                               "ONLY_CLUSTERS_WITH_SELF_EDGES"]:
                 string += '%s [label="%s",fillcolor="#%s"];\n' % (
                     escape(c_name), label(c_name), colors[c_name])
             clusters[idx][1] = "Opened"
@@ -353,15 +372,15 @@ def do_graph(paths,
         for i in [x for x in clusters if x[1] == "Opened"]:
             string += "}\n\n"
 
+    max_dist = get_max_dist(graph)
     if draw_mode in ["NO_CLUSTERS", "CLUSTERS"]:
-        max_dist = get_max_dist(graph)
         for name in graph:
             for name_ in graph[name]:
                 if name_ in graph:
                     string += '%s -> %s [weight=%d];\n' % (
                         escape(name), escape(name_),
                         1 + max_dist - distance(name, name_))
-    elif draw_mode == "ONLY_CLUSTERS":
+    elif draw_mode in ["ONLY_CLUSTERS", "ONLY_CLUSTERS_WITH_SELF_EDGES"]:
         for name in graph_clusters:
             for name_ in graph_clusters[name]:
                 if name_ in graph_clusters:
@@ -389,7 +408,8 @@ def main():
                         help="do not descend into subdirectories")
     parser.add_argument("-g", "--graph", type=int, default=0,
                         help="type of graph: 0 (without clusters), "
-                        "1 (with clusters), 2 (only clusters)")
+                        "1 (with clusters), 2 (only clusters), "
+                        "3 (only clusters, drawing also self edges")
 
     args = parser.parse_args()
     path = args.path.split(",")
