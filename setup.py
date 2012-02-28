@@ -21,13 +21,8 @@
 
 """
 
-import sys
 import os
-import shutil
-import re
-import pwd
 
-from glob import glob
 from setuptools import setup
 
 
@@ -51,7 +46,7 @@ def do_setup():
               },
           keywords="dependencies dependency graph dot graphviz python",
           license="General Public License v3",
-          classifiers=["Development Status :: 3 - Alpha",
+          classifiers=["Development Status :: 4 - Beta",
                        "Natural Language :: English",
                        "Operating System :: POSIX :: Linux",
                        "Programming Language :: Python :: 2",

@@ -41,8 +41,8 @@ def rgb(hue):
     return (str): corresponding RGB value as a hex string.
 
     """
-    r, g, b = colorsys.hsv_to_rgb(hue, 0.6, 0.8)
-    return '%02x%02x%02x' % (r * 256, g * 256, b * 256)
+    red, green, blue = colorsys.hsv_to_rgb(hue, 0.6, 0.8)
+    return '%02x%02x%02x' % (red * 256, green * 256, blue * 256)
 
 
 def color_label(names, start=0.0, stop=1.0):
@@ -57,13 +57,13 @@ def color_label(names, start=0.0, stop=1.0):
                    color as a hex string.
 
     """
-    CONST = 2
+    damping = 2
     if len(names) == 1:
         return {names[0]: rgb(start)}
 
     names_split = [x.split(".") for x in names]
     first_level = sorted(list(set([x[0] for x in names_split])))
-    step = (stop - start) / (len(names) * CONST)
+    step = (stop - start) / (len(names) * damping)
     ret = {}
     cur = start
     for word in first_level:
@@ -71,13 +71,12 @@ def color_label(names, start=0.0, stop=1.0):
         tmp = color_label(to_recur,
                           cur,
                           cur + step * len(to_recur))
-        cur += step * len(to_recur) * CONST
+        cur += step * len(to_recur) * damping
         for name in tmp:
-            if name == "":
-                label = word
-            else:
-                label = "%s.%s" % (word, name)
-            ret[label] = tmp[name]
+            package = word
+            if name != "":
+                package = "%s.%s" % (word, name)
+            ret[package] = tmp[name]
 
     return ret
 
@@ -149,10 +148,13 @@ def adjust(name):
     return (str): name formatted as a package.
 
     """
-    if len(name) >= 2 and name[:2] == "./": name = name[2:]
+    if len(name) >= 2 and name[:2] == "./":
+        name = name[2:]
     name = name.replace("/", ".")
-    if name.endswith(".py"): name = name[:-3]
-    if name.endswith(".__init__"): name = name[:-9]
+    if name.endswith(".py"):
+        name = name[:-3]
+    if name.endswith(".__init__"):
+        name = name[:-9]
     return name
 
 
@@ -192,13 +194,15 @@ def compute_list(paths, exclude=None, recursive=True):
     return ([str], [str]): a list of Python files and of clusters.
 
     """
-    if exclude is None: exclude = []
+    if exclude is None:
+        exclude = []
     ret = []
     clusters = []
     for path in paths:
-        l = dircache.listdir(path)
-        for name in l:
-            if name in [".", ".."] or name in exclude: continue
+        list_ = dircache.listdir(path)
+        for name in list_:
+            if name in [".", ".."] or name in exclude:
+                continue
             complete_name = os.path.join(path, name)
             if os.path.isdir(complete_name):
                 clusters.append(adjust(complete_name))
@@ -252,6 +256,7 @@ def build_graph_clusters(graph, clusters):
             if target is not None and target != source:
                 if target not in graph_clusters[source]:
                     graph_clusters[source].append(target)
+    return graph_clusters
 
 
 def build_graph(files):
@@ -302,11 +307,13 @@ def do_graph(paths,
     recursive (bool): whether we want to analyze subdirectories.
 
     """
-    if exclude is None: exclude = []
+    if exclude is None:
+        exclude = []
     files, tmp_clusters = compute_list(paths,
                                        exclude=exclude,
                                        recursive=recursive)
-    if clusters is None: clusters = tmp_clusters
+    if clusters is None:
+        clusters = tmp_clusters
     clusters.sort()
 
     graph = build_graph(files)
@@ -315,56 +322,55 @@ def do_graph(paths,
 
     clusters = [[x, "Not opened", i] for i, x in enumerate(clusters)]
 
-    s = "digraph G {\n" \
-        "ranksep=1.0\n" \
-        "node [style=filled,fontname=Helvetica,fontsize=10];\n"
+    string = "digraph G {\n" \
+             "ranksep=1.0\n" \
+             "node [style=filled,fontname=Helvetica,fontsize=10];\n"
 
     for name in sorted(graph):
         for c_name, idx in [(x[0], x[2])
                             for x in clusters
-                            if not in_package(name, x[0]) and x[1] == "Opened"]:
+                            if not in_package(name, x[0])
+                                and x[1] == "Opened"]:
             if draw_mode == "CLUSTERS":
-                s += "}\n\n"
+                string += "}\n\n"
             clusters[idx][1] = "Closed"
         for c_name, idx in [(x[0], x[2])
                             for x in clusters
-                            if in_package(name, x[0]) and x[1] == "Not opened"]:
+                            if in_package(name, x[0])
+                                and x[1] == "Not opened"]:
             if draw_mode == "CLUSTERS":
-                s += "\nsubgraph cluster_%s {\n" % escape(c_name)
+                string += "\nsubgraph cluster_%s {\n" % escape(c_name)
             elif draw_mode == "ONLY_CLUSTERS":
-                s += '%s [label="%s",fillcolor="#%s"];\n' % (escape(c_name),
-                                                             label(c_name),
-                                                             colors[c_name]);
+                string += '%s [label="%s",fillcolor="#%s"];\n' % (
+                    escape(c_name), label(c_name), colors[c_name])
             clusters[idx][1] = "Opened"
 
         if draw_mode in ["NO_CLUSTERS", "CLUSTERS"]:
-            s += '%s [label="%s",fillcolor="#%s"];\n' % (escape(name),
-                                                         label(name),
-                                                         colors[name]);
+            string += '%s [label="%s",fillcolor="#%s"];\n' % (
+                escape(name), label(name), colors[name])
 
     if draw_mode == "CLUSTERS":
         for i in [x for x in clusters if x[1] == "Opened"]:
-            s += "}\n\n"
+            string += "}\n\n"
 
     if draw_mode in ["NO_CLUSTERS", "CLUSTERS"]:
         max_dist = get_max_dist(graph)
         for name in graph:
             for name_ in graph[name]:
                 if name_ in graph:
-                    s += '%s -> %s [weight=%d];\n' % (
+                    string += '%s -> %s [weight=%d];\n' % (
                         escape(name), escape(name_),
                         1 + max_dist - distance(name, name_))
     elif draw_mode == "ONLY_CLUSTERS":
         for name in graph_clusters:
             for name_ in graph_clusters[name]:
                 if name_ in graph_clusters:
-                    s += '%s -> %s [weight=%d];\n' % (
+                    string += '%s -> %s [weight=%d];\n' % (
                         escape(name), escape(name_),
-                        max(1, 5 - distance(name, name_)))
+                        max(1, max_dist - distance(name, name_)))
 
-
-    s += "}\n"
-    sys.stdout.write(s)
+    string += "}\n"
+    sys.stdout.write(string)
 
 
 def main():
