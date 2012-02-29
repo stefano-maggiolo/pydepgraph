@@ -61,12 +61,17 @@ def color_label(names, start=0.0, stop=1.0):
 
     """
     damping = 2
-    if len(names) == 1:
+    if names == []:
+        return {}
+    elif len(names) == 1:
         return {names[0]: rgb(start)}
 
     names_split = [x.split(".") for x in names]
     first_level = sorted(list(set([x[0] for x in names_split])))
-    step = 0.0 if names == [] else (stop - start) / (len(names) * damping)
+    step = (stop - start) / (len(names) * damping)
+    infra_dist = 0.0
+    if len(first_level) > 1:
+        infra_dist = (stop - start) / (damping  * (len(first_level) - 1))
     ret = {}
     cur = start
     for word in first_level:
@@ -74,7 +79,7 @@ def color_label(names, start=0.0, stop=1.0):
         tmp = color_label(to_recur,
                           cur,
                           cur + step * len(to_recur))
-        cur += step * len(to_recur) * damping
+        cur += step * len(to_recur) + infra_dist
         for name in tmp:
             package = word
             if name != "":
@@ -256,11 +261,13 @@ def build_graph_clusters(graph, clusters, self_edges=False):
     return ({str: [str]}) a graph of clusters as an adjacency matrix.
 
     """
-    graph_clusters = dict((cluster, []) for cluster in clusters)
+    graph_clusters = {}
     for name in graph:
         source = find_best_cluster(name, clusters)
         if source is None:
             continue
+        if source not in graph_clusters:
+            graph_clusters[source] = []
         for name_ in graph[name]:
             target = find_best_cluster(name_, clusters)
             if target is not None:
