@@ -52,7 +52,7 @@ def color_label(names, start=0.0, stop=1.0):
     """Assign a color to each package name in names in such a way that
     'near' packages have similar colors.
 
-    names ([str]): a list of package names to assign colors to.
+    names ([str]): a sorted list of package names to assign colors to.
     start (float): smallest assignable hue.
     stop (float): largest assignable hue.
 
@@ -206,7 +206,7 @@ def compute_list(path, additional_path="", exclude=None, recursive=True):
         sys.stderr.write("Warning: cannot open path %s.\n" % complete_path)
         return [], []
     for name in list_:
-        if name in [".", ".."] or name in exclude:
+        if name.startswith(".") or name in exclude:
             continue
 
         partial_name = os.path.join(additional_path, name)
@@ -340,8 +340,11 @@ def do_graph(paths,
         [cluster[0] for cluster in clusters],
         self_edges=(draw_mode == "ONLY_CLUSTERS_WITH_SELF_EDGES"))
 
-    all_names = list(set([adjust(x[0]) for x in files + clusters]))
-    colors = color_label(sorted(all_names))
+    if draw_mode in ["NO_CLUSTERS", "CLUSTERS"]:
+        colors = color_label(sorted(graph.keys()))
+
+    elif draw_mode in ["ONLY_CLUSTERS", "ONLY_CLUSTERS_WITH_SELF_EDGES"]:
+        colors = color_label(sorted(graph_clusters.keys()))
 
     clusters = [[x, "Not opened", i] for i, x in enumerate(clusters)]
 
