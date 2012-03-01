@@ -77,25 +77,32 @@ def color_label(names, start=0.0, stop=1.0, damping=3.0):
     elif len(names) == 1:
         return {names[0]: rgb(start)}
 
+    ret = {}
     interval = stop - start
     names_split = [x.split(".") for x in names]
     first_level = sorted(list(set([x[0] for x in names_split])))
+
+    if len(first_level) == 1:
+        word = first_level[0]
+        to_recur = [".".join(x[1:]) for x in names_split]
+        for name, color in color_label(to_recur,
+                                       start,
+                                       stop,
+                                       damping).iteritems():
+            ret[cat(first_level[0], name)] = color
+        return ret
+
     step = (interval / len(names)) / damping
     infra_dist = (damping - 1.0) * interval / len(first_level) / damping
-    ret = {}
     cur = start
     for word in first_level:
         to_recur = [".".join(x[1:]) for x in names_split if x[0] == word]
-        tmp = color_label(to_recur,
-                          cur,
-                          cur + step * len(to_recur),
-                          damping)
+        for name, color in color_label(to_recur,
+                                cur,
+                                cur + step * len(to_recur),
+                                damping).iteritems():
+            ret[cat(word, name)] = color
         cur += step * len(to_recur) + infra_dist
-        for name in tmp:
-            package = word
-            if name != "":
-                package = "%s.%s" % (word, name)
-            ret[package] = tmp[name]
 
     return ret
 
@@ -157,7 +164,7 @@ def get_max_dist(graph):
     return max_dist
 
 
-## Escaping functions. ##
+## Names utility functions. ##
 
 def adjust(name):
     """Return name formatted as a package name.
@@ -195,6 +202,24 @@ def label(name):
 
     """
     return name.replace(".", ".\\n")
+
+
+def cat(package, name):
+    """Return the concatenation of package and name handling the
+    special cases in which one is empty.
+
+    package (str): the prefix.
+    name (str): the suffix.
+
+    return (str): the concatenation.
+
+    """
+    if name == "":
+        return package
+    elif package == "":
+        return name
+    else:
+        return "%s.%s" % (package, name)
 
 
 ## File searching functions. ##
