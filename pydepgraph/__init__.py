@@ -48,37 +48,48 @@ def rgb(hue):
     return '%02x%02x%02x' % (red * 256, green * 256, blue * 256)
 
 
-def color_label(names, start=0.0, stop=1.0):
+def color_label(names, start=0.0, stop=1.0, damping=3.0):
     """Assign a color to each package name in names in such a way that
     'near' packages have similar colors.
 
     names ([str]): a sorted list of package names to assign colors to.
     start (float): smallest assignable hue.
     stop (float): largest assignable hue.
+    damping (float): describe how we want to distribute the
+                     discrimination power of the colors amongst the
+                     levels: a high damping (> 3) means we strongly
+                     prefer to separate nodes differing in the small
+                     level (in particular in the first); a low damping
+                     (1 <= damping <= 3) means we prefer to separate
+                     nodes more uniformly, regardless of the level in
+                     which they differ.
+                     Hence, if damping is low, the nodes will be very
+                     well spread in the hue circle; if damping is
+                     high, nodes' colors will form clusters depending
+                     on the value of the first level.
 
     return (dict): a dictionary assigning to every name in names a
                    color as a hex string.
 
     """
-    damping = 2
     if names == []:
         return {}
     elif len(names) == 1:
         return {names[0]: rgb(start)}
 
+    interval = stop - start
     names_split = [x.split(".") for x in names]
     first_level = sorted(list(set([x[0] for x in names_split])))
-    step = (stop - start) / (len(names) * damping)
-    infra_dist = 0.0
-    if len(first_level) > 1:
-        infra_dist = (stop - start) / (damping  * (len(first_level) - 1))
+    step = (interval / len(names)) / damping
+    infra_dist = (damping - 1.0) * interval / len(first_level) / damping
     ret = {}
     cur = start
     for word in first_level:
         to_recur = [".".join(x[1:]) for x in names_split if x[0] == word]
         tmp = color_label(to_recur,
                           cur,
-                          cur + step * len(to_recur))
+                          cur + step * len(to_recur),
+                          damping)
         cur += step * len(to_recur) + infra_dist
         for name in tmp:
             package = word
