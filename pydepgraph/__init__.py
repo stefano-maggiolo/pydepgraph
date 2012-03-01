@@ -347,6 +347,25 @@ def build_graph(files):
 
 ## Main functions. ##
 
+def draw_arrows(graph):
+    """Draw all arrows of the graph using the usual distance function.
+
+    graph ({str: [str]}): the graph.
+
+    return (str): the string representing the arrows in dot format.
+
+    """
+    string = ""
+    max_dist = get_max_dist(graph)
+    for name in graph:
+        for name_ in graph[name]:
+            if name_ in graph:
+                string += '%s -> %s [weight=%d];\n' % (
+                    escape(name), escape(name_),
+                    1 + max_dist - distance(name, name_))
+    return string
+
+
 def do_graph(paths,
              exclude=None,
              clusters=None,
@@ -378,15 +397,15 @@ def do_graph(paths,
     clusters.sort()
 
     graph = build_graph(files)
-    graph_clusters = build_graph_clusters(
-        graph,
-        [cluster[0] for cluster in clusters],
-        self_edges=(draw_mode == "ONLY_CLUSTERS_WITH_SELF_EDGES"))
 
     if draw_mode in ["NO_CLUSTERS", "CLUSTERS"]:
         colors = color_label(sorted(graph.keys()))
 
     elif draw_mode in ["ONLY_CLUSTERS", "ONLY_CLUSTERS_WITH_SELF_EDGES"]:
+        graph_clusters = build_graph_clusters(
+            graph,
+            [cluster[0] for cluster in clusters],
+            self_edges=(draw_mode == "ONLY_CLUSTERS_WITH_SELF_EDGES"))
         colors = color_label(sorted(graph_clusters.keys()))
 
     clusters = [[x, "Not opened", i] for i, x in enumerate(clusters)]
@@ -403,6 +422,7 @@ def do_graph(paths,
             if draw_mode == "CLUSTERS":
                 string += "}\n\n"
             clusters[idx][1] = "Closed"
+
         for c_name, idx in [(x[0][0], x[2])
                             for x in clusters
                             if in_package(name, x[0][0])
@@ -420,25 +440,12 @@ def do_graph(paths,
                 escape(name), label(name), colors[name])
 
     if draw_mode == "CLUSTERS":
-        for i in [x for x in clusters if x[1] == "Opened"]:
-            string += "}\n\n"
+        string += "}\n\n" * len([x for x in clusters if x[1] == "Opened"])
 
-    max_dist = get_max_dist(graph)
     if draw_mode in ["NO_CLUSTERS", "CLUSTERS"]:
-        for name in graph:
-            for name_ in graph[name]:
-                if name_ in graph:
-                    string += '%s -> %s [weight=%d];\n' % (
-                        escape(name), escape(name_),
-                        1 + max_dist - distance(name, name_))
+        string += draw_arrows(graph)
     elif draw_mode in ["ONLY_CLUSTERS", "ONLY_CLUSTERS_WITH_SELF_EDGES"]:
-        for name in graph_clusters:
-            for name_ in graph_clusters[name]:
-                if name_ in graph_clusters:
-                    string += '%s -> %s [weight=%d];\n' % (
-                        escape(name), escape(name_),
-                        max(1, max_dist - distance(name, name_)))
-
+        string += draw_arrows(graph_clusters)
     string += "}\n"
     sys.stdout.write(string)
 
