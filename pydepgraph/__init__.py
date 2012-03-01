@@ -382,8 +382,11 @@ def draw_graph(graph, clusters, colors, draw_mode):
                 string += "\nsubgraph cluster_%s {\n" % escape(cluster[0])
             elif draw_mode in ["ONLY_CLUSTERS",
                                "ONLY_CLUSTERS_WITH_SELF_EDGES"]:
-                string += '%s [label="%s",fillcolor="#%s"];\n' % (
-                    escape(cluster[0]), label(cluster[0]), colors[cluster[0]])
+                if cluster[0] in colors:
+                    string += '%s [label="%s",fillcolor="#%s"];\n' % (
+                        escape(cluster[0]),
+                        label(cluster[0]),
+                        colors[cluster[0]])
             c_opened.append(cluster)
             clusters.remove(cluster)
 
