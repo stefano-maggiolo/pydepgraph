@@ -78,29 +78,26 @@ def color_label(names, start=0.0, stop=1.0, damping=3.0):
         return {names[0]: rgb(start)}
 
     ret = {}
-    interval = stop - start
-    names_split = [x.split(".") for x in names]
-    first_level = sorted(list(set([x[0] for x in names_split])))
+    names = [x.split(".") for x in names]
+    first_level = sorted(list(set([x[0] for x in names])))
 
     if len(first_level) == 1:
-        word = first_level[0]
-        to_recur = [".".join(x[1:]) for x in names_split]
-        for name, color in color_label(to_recur,
+        for name, color in color_label([".".join(x[1:]) for x in names],
                                        start,
                                        stop,
                                        damping).iteritems():
             ret[cat(first_level[0], name)] = color
         return ret
 
-    step = (interval / len(names)) / damping
-    infra_dist = (damping - 1.0) * interval / len(first_level) / damping
+    step = ((stop - start) / len(names)) / damping
+    infra_dist = (damping - 1.0) * (stop - start) / len(first_level) / damping
     cur = start
     for word in first_level:
-        to_recur = [".".join(x[1:]) for x in names_split if x[0] == word]
+        to_recur = [".".join(x[1:]) for x in names if x[0] == word]
         for name, color in color_label(to_recur,
-                                cur,
-                                cur + step * len(to_recur),
-                                damping).iteritems():
+                                       cur,
+                                       cur + step * len(to_recur),
+                                       damping).iteritems():
             ret[cat(word, name)] = color
         cur += step * len(to_recur) + infra_dist
 
@@ -408,39 +405,36 @@ def do_graph(paths,
             self_edges=(draw_mode == "ONLY_CLUSTERS_WITH_SELF_EDGES"))
         colors = color_label(sorted(graph_clusters.keys()))
 
-    clusters = [[x, "Not opened", i] for i, x in enumerate(clusters)]
+    c_opened = []
 
     string = "digraph G {\n" \
              "ranksep=1.0\n" \
              "node [style=filled,fontname=Helvetica,fontsize=16];\n"
 
     for name in sorted(graph):
-        for c_name, idx in [(x[0], x[2])
-                            for x in clusters
-                            if not in_package(name, x[0][0])
-                                and x[1] == "Opened"]:
+        for cluster in [x for x in c_opened
+                        if not in_package(name, x[0])]:
             if draw_mode == "CLUSTERS":
                 string += "}\n\n"
-            clusters[idx][1] = "Closed"
+            c_opened.remove(cluster)
 
-        for c_name, idx in [(x[0][0], x[2])
-                            for x in clusters
-                            if in_package(name, x[0][0])
-                                and x[1] == "Not opened"]:
+        for cluster in [x for x in clusters
+                        if in_package(name, x[0])]:
             if draw_mode == "CLUSTERS":
-                string += "\nsubgraph cluster_%s {\n" % escape(c_name)
+                string += "\nsubgraph cluster_%s {\n" % escape(cluster[0])
             elif draw_mode in ["ONLY_CLUSTERS",
                                "ONLY_CLUSTERS_WITH_SELF_EDGES"]:
                 string += '%s [label="%s",fillcolor="#%s"];\n' % (
-                    escape(c_name), label(c_name), colors[c_name])
-            clusters[idx][1] = "Opened"
+                    escape(cluster[0]), label(cluster[0]), colors[cluster[0]])
+            c_opened.append(cluster)
+            clusters.remove(cluster)
 
         if draw_mode in ["NO_CLUSTERS", "CLUSTERS"]:
             string += '%s [label="%s",fillcolor="#%s"];\n' % (
                 escape(name), label(name), colors[name])
 
     if draw_mode == "CLUSTERS":
-        string += "}\n\n" * len([x for x in clusters if x[1] == "Opened"])
+        string += "}\n\n" * len(c_opened)
 
     if draw_mode in ["NO_CLUSTERS", "CLUSTERS"]:
         string += draw_arrows(graph)
