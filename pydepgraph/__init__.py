@@ -344,6 +344,59 @@ def build_graph(files):
 
 ## Main functions. ##
 
+def draw_begin_graph():
+    """Return the initial part of the graph definition.
+
+    return (str): initial part of the graph definition.
+
+    """
+    return "digraph G {\n" \
+           "ranksep=1.0\n" \
+           "node [style=filled,fontname=Helvetica,fontsize=16];\n"
+
+
+def draw_graph(graph, clusters, colors, draw_mode):
+    """Return the definition of the nodes and of the clusters.
+
+    graph ({str: [str]}): the graph to draw.
+    clusters ([(str, str)]): the clusters definition.
+    colors ({str: str}): the color assignment.
+    draw_mode (int): the draw mode (cf. DRAW_MODES).
+
+    return (str): the definition of the nodes and of the clusters.
+
+    """
+    c_opened = []
+    string = ""
+
+    for name in sorted(graph):
+        for cluster in [x for x in c_opened
+                        if not in_package(name, x[0])]:
+            if draw_mode == "CLUSTERS":
+                string += "}\n\n"
+            c_opened.remove(cluster)
+
+        for cluster in [x for x in clusters
+                        if in_package(name, x[0])]:
+            if draw_mode == "CLUSTERS":
+                string += "\nsubgraph cluster_%s {\n" % escape(cluster[0])
+            elif draw_mode in ["ONLY_CLUSTERS",
+                               "ONLY_CLUSTERS_WITH_SELF_EDGES"]:
+                string += '%s [label="%s",fillcolor="#%s"];\n' % (
+                    escape(cluster[0]), label(cluster[0]), colors[cluster[0]])
+            c_opened.append(cluster)
+            clusters.remove(cluster)
+
+        if draw_mode in ["NO_CLUSTERS", "CLUSTERS"]:
+            string += '%s [label="%s",fillcolor="#%s"];\n' % (
+                escape(name), label(name), colors[name])
+
+    if draw_mode == "CLUSTERS":
+        string += "}\n\n" * len(c_opened)
+
+    return string
+
+
 def draw_arrows(graph):
     """Draw all arrows of the graph using the usual distance function.
 
@@ -361,6 +414,15 @@ def draw_arrows(graph):
                     escape(name), escape(name_),
                     1 + max_dist - distance(name, name_))
     return string
+
+
+def draw_end_graph():
+    """Return the final part of the graph definition.
+
+    return (str): final part of the graph definition.
+
+    """
+    return "}\n"
 
 
 def do_graph(paths,
@@ -405,43 +467,16 @@ def do_graph(paths,
             self_edges=(draw_mode == "ONLY_CLUSTERS_WITH_SELF_EDGES"))
         colors = color_label(sorted(graph_clusters.keys()))
 
-    c_opened = []
+    sys.stdout.write(draw_begin_graph())
 
-    string = "digraph G {\n" \
-             "ranksep=1.0\n" \
-             "node [style=filled,fontname=Helvetica,fontsize=16];\n"
-
-    for name in sorted(graph):
-        for cluster in [x for x in c_opened
-                        if not in_package(name, x[0])]:
-            if draw_mode == "CLUSTERS":
-                string += "}\n\n"
-            c_opened.remove(cluster)
-
-        for cluster in [x for x in clusters
-                        if in_package(name, x[0])]:
-            if draw_mode == "CLUSTERS":
-                string += "\nsubgraph cluster_%s {\n" % escape(cluster[0])
-            elif draw_mode in ["ONLY_CLUSTERS",
-                               "ONLY_CLUSTERS_WITH_SELF_EDGES"]:
-                string += '%s [label="%s",fillcolor="#%s"];\n' % (
-                    escape(cluster[0]), label(cluster[0]), colors[cluster[0]])
-            c_opened.append(cluster)
-            clusters.remove(cluster)
-
-        if draw_mode in ["NO_CLUSTERS", "CLUSTERS"]:
-            string += '%s [label="%s",fillcolor="#%s"];\n' % (
-                escape(name), label(name), colors[name])
-
-    if draw_mode == "CLUSTERS":
-        string += "}\n\n" * len(c_opened)
+    sys.stdout.write(draw_graph(graph, clusters, colors, draw_mode))
 
     if draw_mode in ["NO_CLUSTERS", "CLUSTERS"]:
-        string += draw_arrows(graph)
+        sys.stdout.write(draw_arrows(graph))
     elif draw_mode in ["ONLY_CLUSTERS", "ONLY_CLUSTERS_WITH_SELF_EDGES"]:
-        string += draw_arrows(graph_clusters)
-    string += "}\n"
-    sys.stdout.write(string)
+        sys.stdout.write(draw_arrows(graph_clusters))
+
+    sys.stdout.write(draw_end_graph())
 
 
 def main():
