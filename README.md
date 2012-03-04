@@ -17,6 +17,7 @@ From the command line help.
 
 ```
 usage: pydepgraph [-h] [-p PATH] [-e EXCLUDE] [-c CLUSTERS] [-r] [-g GRAPH]
+                  [-C]
 
 Draw the dependency graph of a Python project.
 
@@ -32,6 +33,7 @@ optional arguments:
                         type of graph: 0 (without clusters), 1 (with
                         clusters), 2 (only clusters), 3 (only clusters,
                         drawing also self edges
+  -C, --concentrate     merge common path of different edges
 ```
 
 It is important to notice that the paths specified with the -p switch
