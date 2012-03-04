@@ -344,15 +344,17 @@ def build_graph(files):
 
 ## Main functions. ##
 
-def draw_begin_graph():
+def draw_begin_graph(concentrate):
     """Return the initial part of the graph definition.
 
     return (str): initial part of the graph definition.
 
     """
-    return "digraph G {\n" \
-           "ranksep=1.0\n" \
-           "node [style=filled,fontname=Helvetica,fontsize=16];\n"
+    string = "digraph G {\n"
+    if concentrate:
+        string += "concentrate=true\n"
+    string += "node [style=filled,fontname=Helvetica,fontsize=16];\n"
+    return string
 
 
 def draw_graph(graph, clusters, colors, draw_mode):
@@ -432,6 +434,7 @@ def do_graph(paths,
              exclude=None,
              clusters=None,
              draw_mode="CLUSTERS",
+             concentrate=False,
              recursive=True):
     """Main function.
 
@@ -470,7 +473,7 @@ def do_graph(paths,
             self_edges=(draw_mode == "ONLY_CLUSTERS_WITH_SELF_EDGES"))
         colors = color_label(sorted(graph_clusters.keys()))
 
-    sys.stdout.write(draw_begin_graph())
+    sys.stdout.write(draw_begin_graph(concentrate))
 
     sys.stdout.write(draw_graph(graph, clusters, colors, draw_mode))
 
@@ -500,6 +503,8 @@ def main():
                         help="type of graph: 0 (without clusters), "
                         "1 (with clusters), 2 (only clusters), "
                         "3 (only clusters, drawing also self edges")
+    parser.add_argument("-C", "--concentrate", action="store_true",
+                        help="merge common path of different edges")
 
     args = parser.parse_args()
     path = args.path.split(",")
@@ -515,6 +520,7 @@ def main():
              exclude=exclude,
              clusters=clusters,
              draw_mode=draw_mode,
+             concentrate=args.concentrate,
              recursive=not args.no_recursive)
 
 if __name__ == "__main__":
