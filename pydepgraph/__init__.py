@@ -512,8 +512,8 @@ def main():
     exclude = args.exclude.split(",") if args.exclude is not None else None
     try:
         draw_mode = DRAW_MODES[args.graph]
-    except KeyError:
-        print >> sys.stderr, parser.usage
+    except IndexError:
+        parser.print_help(file=sys.stderr)
         sys.exit(1)
 
     do_graph(path,
