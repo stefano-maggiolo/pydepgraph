@@ -417,7 +417,7 @@ def draw_arrows(graph):
             if name_ in graph:
                 string += '%s -> %s [weight=%d];\n' % (
                     escape(name), escape(name_),
-                    1 + max_dist - distance(name, name_))
+                    2 ** (max_dist - distance(name, name_)))
     return string
 
 
