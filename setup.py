@@ -21,8 +21,6 @@
 
 """
 
-import os
-
 from setuptools import setup
 
 
@@ -30,7 +28,6 @@ def do_setup():
     """Execute the setup thanks to setuptools.
 
     """
-    old_umask = os.umask(022)
     setup(name="pydepgraph",
           version="0.1",
           author="Stefano Maggiolo",
@@ -40,10 +37,8 @@ def do_setup():
           description="A dependencies analyzer for Python",
           packages=["pydepgraph"],
           entry_points={
-              "console_scripts": [
-                  "pydepgraph=pydepgraph:main",
-                  ]
-              },
+              "console_scripts": ["pydepgraph=pydepgraph:main"]
+          },
           keywords="dependencies dependency graph dot graphviz python",
           license="General Public License v3",
           classifiers=["Development Status :: 4 - Beta",
@@ -52,9 +47,8 @@ def do_setup():
                        "Programming Language :: Python :: 2",
                        "License :: OSI Approved :: "
                        "GNU General Public License v3",
-                      ],
+              ],
          )
-    os.umask(old_umask)
 
 
 if __name__ == "__main__":

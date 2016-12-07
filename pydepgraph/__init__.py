@@ -21,12 +21,12 @@
 
 """
 
-import dircache
+import argparse
+import colorsys
 import sys
 import os
-import colorsys
-import argparse
 
+xrange = range
 
 DRAW_MODES = ["NO_CLUSTERS",
               "CLUSTERS",
@@ -85,7 +85,7 @@ def color_label(names, start=0.0, stop=1.0, damping=3.0):
         for name, color in color_label([".".join(x[1:]) for x in names],
                                        start,
                                        stop,
-                                       damping).iteritems():
+                                       damping).items():
             ret[cat(first_level[0], name)] = color
         return ret
 
@@ -97,7 +97,7 @@ def color_label(names, start=0.0, stop=1.0, damping=3.0):
         for name, color in color_label(to_recur,
                                        cur,
                                        cur + step * len(to_recur),
-                                       damping).iteritems():
+                                       damping).items():
             ret[cat(word, name)] = color
         cur += step * len(to_recur) + infra_dist
 
@@ -239,7 +239,7 @@ def compute_list(path, additional_path="", exclude=None, recursive=True):
     clusters = [(adjust(additional_path), path)]
     complete_path = os.path.join(path, additional_path)
     try:
-        list_ = dircache.listdir(complete_path)
+        list_ = os.listdir(complete_path)
     except OSError:
         sys.stderr.write("Warning: cannot open path %s.\n" % complete_path)
         return [], []
