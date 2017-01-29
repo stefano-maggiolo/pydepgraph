@@ -17,9 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""The program is all here.
-
-"""
+"""The program is all here."""
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
@@ -35,13 +33,15 @@ import sys
 import os
 
 
-DRAW_MODES = ["NO_CLUSTERS",
-              "CLUSTERS",
-              "ONLY_CLUSTERS",
-              "ONLY_CLUSTERS_WITH_SELF_EDGES"]
+DRAW_MODES = [
+    "NO_CLUSTERS",
+    "CLUSTERS",
+    "ONLY_CLUSTERS",
+    "ONLY_CLUSTERS_WITH_SELF_EDGES",
+]
 
 
-## Color hashing functions. ##
+# Color hashing functions.
 
 def rgb(hue):
     """Return a RGB value from a hue value.
@@ -111,7 +111,7 @@ def color_label(names, start=0.0, stop=1.0, damping=3.0):
     return ret
 
 
-## Distance between packages. ##
+# Distance between packages.
 
 def in_package(mod, pkg):
     """Return if mod is a subpackage of pkg.
@@ -168,7 +168,7 @@ def get_max_dist(graph):
     return max_dist
 
 
-## Names utility functions. ##
+# Names utility functions.
 
 def adjust(name):
     """Return name formatted as a package name.
@@ -226,7 +226,7 @@ def cat(package, name):
         return "%s.%s" % (package, name)
 
 
-## File searching functions. ##
+# File searching functions.
 
 def compute_list(path, additional_path="", exclude=None, recursive=True):
     """Return all Python files and clusters (read: subdirectory)
@@ -270,7 +270,7 @@ def compute_list(path, additional_path="", exclude=None, recursive=True):
     return ret, clusters
 
 
-## Graph creation functions. ##
+# Graph creation functions.
 
 def find_best_cluster(name, clusters):
     """Return the cluster in clusters which is nearest to name.
@@ -349,7 +349,7 @@ def build_graph(files):
     return graph
 
 
-## Main functions. ##
+# Main functions.
 
 def draw_begin_graph(concentrate):
     """Return the initial part of the graph definition.
@@ -529,6 +529,7 @@ def main():
              draw_mode=draw_mode,
              concentrate=args.concentrate,
              recursive=not args.no_recursive)
+
 
 if __name__ == "__main__":
     main()

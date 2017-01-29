@@ -17,9 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Installation routines.
-
-"""
+"""Installation routines."""
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
@@ -33,9 +31,7 @@ from setuptools import setup
 
 
 def do_setup():
-    """Execute the setup thanks to setuptools.
-
-    """
+    """Execute the setup thanks to setuptools."""
     setup(name="pydepgraph",
           version="0.1",
           author="Stefano Maggiolo",
@@ -49,15 +45,16 @@ def do_setup():
           },
           keywords="dependencies dependency graph dot graphviz python",
           license="General Public License v3",
-          classifiers=["Development Status :: 4 - Beta",
-                       "Natural Language :: English",
-                       "Operating System :: POSIX :: Linux",
-                       "Programming Language :: Python :: 2",
-                       "Programming Language :: Python :: 3",
-                       "License :: OSI Approved :: "
-                       "GNU General Public License v3",
-              ],
-         )
+          classifiers=[
+              "Development Status :: 4 - Beta",
+              "Natural Language :: English",
+              "Operating System :: POSIX :: Linux",
+              "Programming Language :: Python :: 2",
+              "Programming Language :: Python :: 3",
+              "License :: OSI Approved :: "
+              "GNU General Public License v3",
+          ],
+    )
 
 
 if __name__ == "__main__":
