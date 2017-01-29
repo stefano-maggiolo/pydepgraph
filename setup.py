@@ -21,6 +21,14 @@
 
 """
 
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import (
+         bytes, dict, int, list, object, range, str,
+         ascii, chr, hex, input, next, oct, open,
+         pow, round, super,
+         filter, map, zip)
+
 from setuptools import setup
 
 
@@ -45,6 +53,7 @@ def do_setup():
                        "Natural Language :: English",
                        "Operating System :: POSIX :: Linux",
                        "Programming Language :: Python :: 2",
+                       "Programming Language :: Python :: 3",
                        "License :: OSI Approved :: "
                        "GNU General Public License v3",
               ],

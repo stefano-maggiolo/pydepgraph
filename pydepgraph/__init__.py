@@ -21,12 +21,19 @@
 
 """
 
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import (
+         bytes, dict, int, list, object, range, str,
+         ascii, chr, hex, input, next, oct, open,
+         pow, round, super,
+         filter, map, zip)
+
 import argparse
 import colorsys
 import sys
 import os
 
-xrange = range
 
 DRAW_MODES = ["NO_CLUSTERS",
               "CLUSTERS",
@@ -134,11 +141,11 @@ def distance(pkg1, pkg2):
     split1 = pkg1.split(".")
     split2 = pkg2.split(".")
     dist = 0
-    for i in xrange(len(split2), 0, -1):
+    for i in range(len(split2), 0, -1):
         if in_package(pkg1, ".".join(split2[:i])):
             break
         dist += 1
-    for i in xrange(len(split1), 0, -1):
+    for i in range(len(split1), 0, -1):
         if in_package(pkg2, ".".join(split1[:i])):
             break
         dist += 1
