@@ -21,17 +21,15 @@
 
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
-from builtins import (
-         bytes, dict, int, list, object, range, str,
-         ascii, chr, hex, input, next, oct, open,
-         pow, round, super,
-         filter, map, zip)
 
 import argparse
 import colorsys
 import sys
 import os
-
+try:
+    from codecs import open
+except ImportError:
+    pass
 
 DRAW_MODES = [
     "NO_CLUSTERS",
@@ -330,7 +328,8 @@ def build_graph(files):
     """
     graph = {}
     for file_, path in files:
-        content = open(os.path.join(path, file_)).read().replace("\\\n", "")
+        content = open(os.path.join(path, file_), encoding="utf-8")\
+            .read().replace("\\\n", "")
         file_display = adjust(file_)
         graph[file_display] = []
         for line in content.split("\n"):
