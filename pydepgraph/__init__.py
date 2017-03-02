@@ -49,8 +49,9 @@ def rgb(hue):
     return (str): corresponding RGB value as a hex string.
 
     """
-    red, green, blue = colorsys.hsv_to_rgb(hue, 0.6, 0.8)
-    return '%02x%02x%02x' % (red * 256, green * 256, blue * 256)
+    red, green, blue = (int(x * 256)
+                        for x in colorsys.hsv_to_rgb(hue, 0.6, 0.8))
+    return '%02x%02x%02x' % (red, green, blue)
 
 
 def color_label(names, start=0.0, stop=1.0, damping=3.0):
