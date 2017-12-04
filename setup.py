@@ -22,8 +22,7 @@
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 
-from setuptools import setup
-
+from setuptools import setup, find_packages
 
 def do_setup():
     """Execute the setup thanks to setuptools."""
@@ -34,7 +33,6 @@ def do_setup():
           url="",
           download_url="",
           description="A dependencies analyzer for Python",
-          packages=["pydepgraph"],
           entry_points={
               "console_scripts": ["pydepgraph=pydepgraph:main"]
           },
@@ -46,10 +44,10 @@ def do_setup():
               "Operating System :: POSIX :: Linux",
               "Programming Language :: Python :: 2",
               "Programming Language :: Python :: 3",
-              "License :: OSI Approved :: "
-              "GNU General Public License v3",
+              "License :: OSI Approved :: General Public License v3"
           ],
-    )
+          packages=find_packages()
+          )
 
 
 if __name__ == "__main__":
